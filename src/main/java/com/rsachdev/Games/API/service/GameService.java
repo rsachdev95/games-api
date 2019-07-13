@@ -4,8 +4,12 @@ import com.mongodb.DuplicateKeyException;
 import com.mongodb.MongoException;
 import com.rsachdev.Games.API.exception.DataException;
 import com.rsachdev.Games.API.model.Game;
+import com.rsachdev.Games.API.model.Games;
 import com.rsachdev.Games.API.repository.GameRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.net.URI;
@@ -15,12 +19,8 @@ import java.util.UUID;
 
 @Service
 public class GameService {
-    private final GameRepository gameRepository;
-
     @Autowired
-    public GameService(GameRepository gameRepository) {
-        this.gameRepository = gameRepository;
-    }
+    private GameRepository gameRepository;
 
     public Game getById(String id) throws DataException {
         Game game;
@@ -53,5 +53,24 @@ public class GameService {
         }
 
         return createdGame;
+    }
+
+    public Games listAllGames() throws DataException {
+        Games games = new Games();
+
+        Pageable pageable = PageRequest.of(0, 2);
+
+        try {
+            Page<Game> gamePage = gameRepository.findAll(pageable);
+            games.setItems(gamePage.getContent());
+            games.setItemsPerPage(gamePage.getSize());
+            games.setStartIndex(gamePage.getPageable().getOffset());
+            games.setTotalResults(gamePage.getTotalElements());
+
+        } catch (MongoException me) {
+            throw new DataException("Error when trying to retrieve all games: ", me);
+        }
+
+        return games;
     }
 }

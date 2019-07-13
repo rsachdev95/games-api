@@ -4,6 +4,7 @@ import com.mongodb.DuplicateKeyException;
 import com.rsachdev.Games.API.GamesApiApplication;
 import com.rsachdev.Games.API.exception.DataException;
 import com.rsachdev.Games.API.model.Game;
+import com.rsachdev.Games.API.model.Games;
 import com.rsachdev.Games.API.service.GameService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,12 +21,9 @@ import java.net.URI;
 @RequestMapping("/games")
 public class GameController {
     private static final Logger LOG = LoggerFactory.getLogger(GamesApiApplication.APPLICATION_NAMESPACE);
-    private final GameService gameService;
 
     @Autowired
-    public GameController(GameService gameService) {
-        this.gameService = gameService;
-    }
+    private GameService gameService;
 
     @GetMapping("/{gameId}")
     public ResponseEntity fetch(@PathVariable String gameId) {
@@ -53,7 +51,7 @@ public class GameController {
         Game createdGame;
 
         try {
-            LOG.info("Creating game: " + game);
+            LOG.info("Creating game: " + game.getTitle());
             createdGame = gameService.createGame(game);
         } catch (DataException de) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
@@ -65,6 +63,26 @@ public class GameController {
         URI location = URI.create(locationString);
 
         return ResponseEntity.created(location).build();
+    }
+
+    @GetMapping
+    public ResponseEntity listAll() {
+        Games games;
+
+        try {
+            LOG.info("Retrieving all games");
+            games = gameService.listAllGames();
+        } catch (DataException de) {
+            LOG.error("Error when retrieving all games", de);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+
+        if (games == null) {
+            LOG.error("No games found");
+            return ResponseEntity.notFound().build();
+        }
+
+        return ResponseEntity.ok(games);
     }
 
 }
