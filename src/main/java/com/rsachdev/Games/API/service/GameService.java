@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mongodb.DuplicateKeyException;
 import com.mongodb.MongoException;
 import com.rsachdev.Games.API.exception.DataException;
+import com.rsachdev.Games.API.exception.ResourceNotFoundException;
 import com.rsachdev.Games.API.exception.ServiceException;
 import com.rsachdev.Games.API.exception.UnauthorisedDeveloperException;
 import com.rsachdev.Games.API.model.Developer;
@@ -39,7 +40,7 @@ public class GameService {
 
     private List<Developer> authorisedDevelopers;
 
-    public Game getById(String id) throws ServiceException {
+    public Game getById(String id) throws ServiceException, ResourceNotFoundException {
         Game game;
 
         try {
@@ -49,7 +50,7 @@ public class GameService {
         }
 
         if (game == null) {
-            return null;
+            throw new ResourceNotFoundException("Game " + id + " does not exist");
         }
 
         return game;
@@ -58,7 +59,7 @@ public class GameService {
     public Game createGame(Game game, String developer) throws ServiceException, UnauthorisedDeveloperException, DataException {
         Game createdGame;
 
-        if(!isAuthorisedDeveloper(developer)) {
+        if(developer == null || !isAuthorisedDeveloper(developer)) {
             throw new UnauthorisedDeveloperException("Developer not authorised to create game");
         }
 
@@ -97,6 +98,40 @@ public class GameService {
         }
 
         return games;
+    }
+
+    public Game updateGame(Game game, String id, String developer) throws ServiceException, UnauthorisedDeveloperException, ResourceNotFoundException {
+        Game updatedGame;
+
+        Game existingGame = getById(id);
+
+        if(developer == null || !validateDeveloperOfGame(existingGame, developer)) {
+            throw new UnauthorisedDeveloperException("Developer not authorised to update this game");
+        }
+
+        game.setId(id);
+
+        try {
+            updatedGame = gameRepository.save(game);
+        } catch (MongoException me) {
+            throw new ServiceException("Error occurred when updating the game: " + game.getTitle());
+        }
+
+        return updatedGame;
+    }
+
+    public void deleteGame(String id, String developer) throws ResourceNotFoundException, ServiceException, UnauthorisedDeveloperException {
+        Game existingGame = getById(id);
+
+        if(developer == null || !validateDeveloperOfGame(existingGame, developer)) {
+            throw new UnauthorisedDeveloperException("Developer not authorised to delete this game");
+        }
+
+        try {
+            gameRepository.delete(existingGame);
+        } catch (MongoException me) {
+            throw new ServiceException("Error occurred when deleting game: " + existingGame.getId());
+        }
     }
 
     private boolean isAuthorisedDeveloper(String developer) throws ServiceException {

@@ -1,14 +1,11 @@
 package com.rsachdev.Games.API.controller;
 
-import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.model.S3Object;
-import com.amazonaws.services.s3.model.S3ObjectInputStream;
 import com.mongodb.DuplicateKeyException;
 import com.rsachdev.Games.API.GamesApiApplication;
 import com.rsachdev.Games.API.exception.DataException;
+import com.rsachdev.Games.API.exception.ResourceNotFoundException;
 import com.rsachdev.Games.API.exception.ServiceException;
 import com.rsachdev.Games.API.exception.UnauthorisedDeveloperException;
-import com.rsachdev.Games.API.model.Developer;
 import com.rsachdev.Games.API.model.Game;
 import com.rsachdev.Games.API.model.Games;
 import com.rsachdev.Games.API.service.GameService;
@@ -21,9 +18,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
-import java.io.IOException;
 import java.net.URI;
-import java.util.List;
 
 @RestController
 @RequestMapping("/games")
@@ -32,9 +27,6 @@ public class GameController {
 
     @Autowired
     private GameService gameService;
-
-    @Autowired
-    private AmazonS3 amazonS3Client;
 
     @GetMapping("/{gameId}")
     public ResponseEntity fetch(@PathVariable String gameId) {
@@ -46,10 +38,7 @@ public class GameController {
         } catch (ServiceException de) {
             LOG.error("Error when retrieving game with id: " + gameId, de);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
-
-        if (game == null) {
-            LOG.error("Game with id: " + gameId + " not found");
+        } catch (ResourceNotFoundException rnfe) {
             return ResponseEntity.notFound().build();
         }
 
@@ -104,6 +93,40 @@ public class GameController {
         }
 
         return ResponseEntity.ok(games);
+    }
+
+    @PutMapping("/{gameId}")
+    public ResponseEntity update(@Valid @RequestBody Game game, @PathVariable String gameId, HttpServletRequest request) {
+        String developer = request.getHeader("developer");
+
+        try {
+            gameService.updateGame(game, gameId, developer);
+        } catch (UnauthorisedDeveloperException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        } catch (ServiceException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        } catch (ResourceNotFoundException rnfe) {
+            return ResponseEntity.notFound().build();
+        }
+
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/{gameId}")
+    public ResponseEntity delete(@PathVariable String gameId, HttpServletRequest request) {
+        String developer = request.getHeader("developer");
+
+        try {
+            gameService.deleteGame(gameId, developer);
+        } catch (ResourceNotFoundException e) {
+            return ResponseEntity.notFound().build();
+        } catch (ServiceException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        } catch (UnauthorisedDeveloperException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        return ResponseEntity.noContent().build();
     }
 
 }
