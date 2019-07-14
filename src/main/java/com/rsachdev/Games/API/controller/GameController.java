@@ -1,8 +1,14 @@
 package com.rsachdev.Games.API.controller;
 
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.S3Object;
+import com.amazonaws.services.s3.model.S3ObjectInputStream;
 import com.mongodb.DuplicateKeyException;
 import com.rsachdev.Games.API.GamesApiApplication;
 import com.rsachdev.Games.API.exception.DataException;
+import com.rsachdev.Games.API.exception.ServiceException;
+import com.rsachdev.Games.API.exception.UnauthorisedDeveloperException;
+import com.rsachdev.Games.API.model.Developer;
 import com.rsachdev.Games.API.model.Game;
 import com.rsachdev.Games.API.model.Games;
 import com.rsachdev.Games.API.service.GameService;
@@ -15,7 +21,9 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
+import java.io.IOException;
 import java.net.URI;
+import java.util.List;
 
 @RestController
 @RequestMapping("/games")
@@ -25,6 +33,9 @@ public class GameController {
     @Autowired
     private GameService gameService;
 
+    @Autowired
+    private AmazonS3 amazonS3Client;
+
     @GetMapping("/{gameId}")
     public ResponseEntity fetch(@PathVariable String gameId) {
         Game game;
@@ -32,7 +43,7 @@ public class GameController {
         try {
             LOG.info("Getting game with id: " + gameId);
             game = gameService.getById(gameId);
-        } catch (DataException de) {
+        } catch (ServiceException de) {
             LOG.error("Error when retrieving game with id: " + gameId, de);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
@@ -49,19 +60,29 @@ public class GameController {
     @PostMapping
     public ResponseEntity create(@Valid @RequestBody Game game, HttpServletRequest request) {
         Game createdGame;
+        String developer = request.getHeader("developer");
 
         try {
             LOG.info("Creating game: " + game.getTitle());
-            createdGame = gameService.createGame(game);
-        } catch (DataException de) {
+            createdGame = gameService.createGame(game, developer);
+        } catch (ServiceException se) {
+            LOG.error("Error when creating game with title: " + game.getTitle(), se);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         } catch (DuplicateKeyException dke) {
+            LOG.error("Id already exists - try creating " + game.getTitle() + " again", dke);
             return ResponseEntity.status(HttpStatus.CONFLICT).build();
+        } catch (UnauthorisedDeveloperException ude) {
+            LOG.error("Developer not authorised to create " + game.getTitle(), ude);
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        } catch (DataException de) {
+            LOG.error("Developer, " + developer + ", trying to create the game is not the same as the developer listed on the game, " + game.getDeveloper(), de);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
 
         String locationString = request.getRequestURI() + "/" + createdGame.getId();
         URI location = URI.create(locationString);
 
+        LOG.info("Game: " + createdGame.getTitle() + " successfully created");
         return ResponseEntity.created(location).build();
     }
 
@@ -72,7 +93,7 @@ public class GameController {
         try {
             LOG.info("Retrieving all games");
             games = gameService.listAllGames();
-        } catch (DataException de) {
+        } catch (ServiceException de) {
             LOG.error("Error when retrieving all games", de);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }

@@ -1,6 +1,6 @@
 package com.rsachdev.Games.API.controller;
 
-import com.rsachdev.Games.API.exception.DataException;
+import com.rsachdev.Games.API.exception.ServiceException;
 import com.rsachdev.Games.API.model.Game;
 import com.rsachdev.Games.API.model.Games;
 import com.rsachdev.Games.API.service.GameService;
@@ -36,7 +36,7 @@ public class GameControllerTest {
 
     @Test
     @DisplayName("Test successful retrieval of game by id")
-    void getGameByIdSuccessful() throws DataException {
+    void getGameByIdSuccessful() throws ServiceException {
         Game game = createGame();
         when(gameService.getById(ID)).thenReturn(game);
 
@@ -48,7 +48,7 @@ public class GameControllerTest {
 
     @Test
     @DisplayName("Test unsuccessful retrieval of game by id - not found")
-    void getGameByIdUnsuccessfulNotFound() throws DataException {
+    void getGameByIdUnsuccessfulNotFound() throws ServiceException {
         when(gameService.getById(ID)).thenReturn(null);
 
         ResponseEntity response = gameController.fetch(ID);
@@ -58,9 +58,9 @@ public class GameControllerTest {
     }
 
     @Test
-    @DisplayName("Test unsuccessful retrieval of game by id - DataException")
-    void getGameByIdUnsuccessfulDataException() throws DataException {
-        when(gameService.getById(ID)).thenThrow(DataException.class);
+    @DisplayName("Test unsuccessful retrieval of game by id - ServiceException")
+    void getGameByIdUnsuccessfulDataException() throws ServiceException {
+        when(gameService.getById(ID)).thenThrow(ServiceException.class);
 
         ResponseEntity response = gameController.fetch(ID);
         assertNotNull(response);
@@ -70,7 +70,7 @@ public class GameControllerTest {
 
     @Test
     @DisplayName("Tests successful retrieval of all games")
-    void listAllGamesSuccessful() throws DataException {
+    void listAllGamesSuccessful() throws ServiceException {
         Games games = createGames();
         when(gameService.listAllGames()).thenReturn(games);
 
@@ -82,7 +82,7 @@ public class GameControllerTest {
 
     @Test
     @DisplayName("Tests unsuccessful retrieval of all games - not found")
-    void listAllGamesUnsuccessfulNotFound() throws DataException {
+    void listAllGamesUnsuccessfulNotFound() throws ServiceException {
         when(gameService.listAllGames()).thenReturn(null);
 
         ResponseEntity response = gameController.listAll();
@@ -92,9 +92,9 @@ public class GameControllerTest {
     }
 
     @Test
-    @DisplayName("Test unsuccessful retrieval of all games - DataException")
-    void listAllGamesUnsuccessfulDataException() throws DataException {
-        when(gameService.listAllGames()).thenThrow(DataException.class);
+    @DisplayName("Test unsuccessful retrieval of all games - ServiceException")
+    void listAllGamesUnsuccessfulDataException() throws ServiceException {
+        when(gameService.listAllGames()).thenThrow(ServiceException.class);
 
         ResponseEntity response = gameController.listAll();
         assertNotNull(response);
