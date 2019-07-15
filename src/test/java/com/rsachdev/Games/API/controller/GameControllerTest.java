@@ -7,7 +7,6 @@ import com.rsachdev.Games.API.exception.ValidationException;
 import com.rsachdev.Games.API.model.Game;
 import com.rsachdev.Games.API.model.Games;
 import com.rsachdev.Games.API.service.GameService;
-import org.junit.Before;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -20,9 +19,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.validation.Validation;
 import javax.validation.Validator;
-import javax.validation.ValidatorFactory;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
@@ -52,12 +49,6 @@ public class GameControllerTest {
 
     @InjectMocks
     private GameController gameController;
-
-    @Before
-    public void setUp() {
-        ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
-        validator = factory.getValidator();
-    }
 
     @Test
     @DisplayName("Test successful retrieval of game by id")
