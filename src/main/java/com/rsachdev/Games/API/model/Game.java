@@ -17,8 +17,6 @@ public class Game {
     @JsonProperty("id")
     private String id;
 
-    @NotNull
-    @NotEmpty
     @Field("title")
     @JsonProperty("title")
     private String title;
@@ -27,13 +25,10 @@ public class Game {
     @JsonProperty("release_date")
     private LocalDate releaseDate;
 
-    @NotEmpty
     @Field("genres")
     @JsonProperty("genres")
     private List<String> genres;
 
-    @NotNull
-    @NotEmpty
     @Field("developer")
     @JsonProperty("developer")
     private String developer;

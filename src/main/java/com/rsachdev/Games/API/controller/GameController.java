@@ -5,6 +5,7 @@ import com.rsachdev.Games.API.GamesApiApplication;
 import com.rsachdev.Games.API.exception.ResourceNotFoundException;
 import com.rsachdev.Games.API.exception.ServiceException;
 import com.rsachdev.Games.API.exception.UnauthorisedDeveloperException;
+import com.rsachdev.Games.API.exception.ValidationException;
 import com.rsachdev.Games.API.model.Game;
 import com.rsachdev.Games.API.model.Games;
 import com.rsachdev.Games.API.service.GameService;
@@ -63,6 +64,8 @@ public class GameController {
         } catch (UnauthorisedDeveloperException ude) {
             LOG.error("Developer not authorised to create " + game.getTitle(), ude);
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        } catch (ValidationException ve) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ve.getMessage());
         }
 
         String locationString = request.getRequestURI() + "/" + createdGame.getId();
@@ -104,6 +107,8 @@ public class GameController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         } catch (ResourceNotFoundException rnfe) {
             return ResponseEntity.notFound().build();
+        } catch (ValidationException ve) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ve.getMessage());
         }
 
         return ResponseEntity.noContent().build();

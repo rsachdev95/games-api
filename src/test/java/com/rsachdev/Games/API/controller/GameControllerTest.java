@@ -3,6 +3,7 @@ package com.rsachdev.Games.API.controller;
 import com.rsachdev.Games.API.exception.ResourceNotFoundException;
 import com.rsachdev.Games.API.exception.ServiceException;
 import com.rsachdev.Games.API.exception.UnauthorisedDeveloperException;
+import com.rsachdev.Games.API.exception.ValidationException;
 import com.rsachdev.Games.API.model.Game;
 import com.rsachdev.Games.API.model.Games;
 import com.rsachdev.Games.API.service.GameService;
@@ -128,7 +129,7 @@ public class GameControllerTest {
 
     @Test
     @DisplayName("Test successful create of game")
-    void createGameSuccessful() throws UnauthorisedDeveloperException, ServiceException {
+    void createGameSuccessful() throws UnauthorisedDeveloperException, ServiceException, ValidationException {
         Game game = createGame();
         when(request.getHeader(DEVELOPER)).thenReturn(DEVELOPER);
         when(request.getRequestURI()).thenReturn(REQUEST_URI);
@@ -141,14 +142,15 @@ public class GameControllerTest {
     }
 
     @Test
-    @DisplayName("Test unsuccessful create of game - bad request")
-    void createGameUnsuccessfulBadRequest() throws
-            UnauthorisedDeveloperException, ServiceException {
+    @DisplayName("Test unsuccessful create of game - ValidationException")
+    void createGameUnsuccessfulValidationException() throws
+            UnauthorisedDeveloperException, ServiceException, ValidationException {
         Game game = createGame();
         game.setTitle(null);
 
         when(request.getHeader(DEVELOPER)).thenReturn(DEVELOPER);
-        when(request.getRequestURI()).thenReturn(REQUEST_URI);
+
+        when(gameService.createGame(game, DEVELOPER)).thenThrow(ValidationException.class);
 
         ResponseEntity response = gameController.create(game, request);
         assertNotNull(response);
@@ -157,7 +159,7 @@ public class GameControllerTest {
 
     @Test
     @DisplayName("Test unsuccessful create of game - unauthorised")
-    void createGameUnsuccessfulUnauthorised() throws ServiceException, UnauthorisedDeveloperException {
+    void createGameUnsuccessfulUnauthorised() throws ServiceException, UnauthorisedDeveloperException, ValidationException {
         Game game = createGame();
 
         when(request.getHeader(DEVELOPER)).thenReturn(DEVELOPER);
@@ -170,7 +172,7 @@ public class GameControllerTest {
 
     @Test
     @DisplayName("Test unsuccessful create of game - ServiceException")
-    void createGameUnsuccessfulServiceException() throws ServiceException, UnauthorisedDeveloperException {
+    void createGameUnsuccessfulServiceException() throws ServiceException, UnauthorisedDeveloperException, ValidationException {
         Game game = createGame();
 
         when(request.getHeader(DEVELOPER)).thenReturn(DEVELOPER);
@@ -195,7 +197,7 @@ public class GameControllerTest {
 
     @Test
     @DisplayName("Test unsuccessful update of game - unauthorised developer")
-    void updateGameUnsuccessfulUnauthorised() throws ResourceNotFoundException, UnauthorisedDeveloperException, ServiceException {
+    void updateGameUnsuccessfulUnauthorised() throws ResourceNotFoundException, UnauthorisedDeveloperException, ServiceException, ValidationException {
         Game game = createGame();
 
         when(request.getHeader(DEVELOPER)).thenReturn(DEVELOPER);
@@ -208,7 +210,7 @@ public class GameControllerTest {
 
     @Test
     @DisplayName("Test unsuccessful update of game - ServiceException")
-    void updateGameUnsuccessfulServiceException() throws ResourceNotFoundException, UnauthorisedDeveloperException, ServiceException {
+    void updateGameUnsuccessfulServiceException() throws ResourceNotFoundException, UnauthorisedDeveloperException, ServiceException, ValidationException {
         Game game = createGame();
 
         when(request.getHeader(DEVELOPER)).thenReturn(DEVELOPER);
@@ -221,7 +223,7 @@ public class GameControllerTest {
 
     @Test
     @DisplayName("Test unsuccessful update of game - ResourceNotFoundException")
-    void updateGameUnsuccessfulResourceNotFound() throws ResourceNotFoundException, UnauthorisedDeveloperException, ServiceException {
+    void updateGameUnsuccessfulResourceNotFound() throws ResourceNotFoundException, UnauthorisedDeveloperException, ServiceException, ValidationException {
         Game game = createGame();
 
         when(request.getHeader(DEVELOPER)).thenReturn(DEVELOPER);
@@ -230,6 +232,19 @@ public class GameControllerTest {
         ResponseEntity response = gameController.update(game, ID, request);
         assertNotNull(response);
         assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+    }
+
+    @Test
+    @DisplayName("Test unsuccessful update of game - ValidationException")
+    void updateGameUnsuccessfulValidationException() throws ServiceException, ResourceNotFoundException, UnauthorisedDeveloperException, ValidationException {
+        Game game = createGame();
+
+        when(request.getHeader(DEVELOPER)).thenReturn(DEVELOPER);
+        doThrow(ValidationException.class).when(gameService).updateGame(game, ID, DEVELOPER);
+
+        ResponseEntity response = gameController.update(game, ID, request);
+        assertNotNull(response);
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
     }
 
     @Test

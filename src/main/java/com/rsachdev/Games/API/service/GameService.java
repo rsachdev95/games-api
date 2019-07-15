@@ -10,11 +10,13 @@ import com.mongodb.MongoException;
 import com.rsachdev.Games.API.exception.ResourceNotFoundException;
 import com.rsachdev.Games.API.exception.ServiceException;
 import com.rsachdev.Games.API.exception.UnauthorisedDeveloperException;
+import com.rsachdev.Games.API.exception.ValidationException;
 import com.rsachdev.Games.API.model.Developer;
 import com.rsachdev.Games.API.model.Developers;
 import com.rsachdev.Games.API.model.Game;
 import com.rsachdev.Games.API.model.Games;
 import com.rsachdev.Games.API.repository.GameRepository;
+import com.rsachdev.Games.API.validation.GameValidator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -36,6 +38,9 @@ public class GameService {
     @Autowired
     private GameRepository gameRepository;
 
+    @Autowired
+    private GameValidator gameValidator;
+
     private List<Developer> authorisedDevelopers;
 
     public Game getById(String id) throws ServiceException, ResourceNotFoundException {
@@ -54,8 +59,13 @@ public class GameService {
         return game;
     }
 
-    public Game createGame(Game game, String developer) throws ServiceException, UnauthorisedDeveloperException {
+    public Game createGame(Game game, String developer) throws ServiceException, UnauthorisedDeveloperException, ValidationException {
         Game createdGame;
+
+        List<String> errors = gameValidator.validateNotNullOrEmpty(game);
+        if(!errors.isEmpty()) {
+            throw new ValidationException(errors.toString());
+        }
 
         if(developer == null || !isAuthorisedDeveloper(developer)  || validateDeveloperOfGame(game, developer)) {
             throw new UnauthorisedDeveloperException("Developer not authorised to create game");
@@ -94,8 +104,13 @@ public class GameService {
         return games;
     }
 
-    public void updateGame(Game game, String id, String developer) throws ServiceException, UnauthorisedDeveloperException, ResourceNotFoundException {
+    public void updateGame(Game game, String id, String developer) throws ServiceException, UnauthorisedDeveloperException, ResourceNotFoundException, ValidationException {
         Game existingGame = getById(id);
+
+        List<String> errors = gameValidator.validateNotNullOrEmpty(game);
+        if(!errors.isEmpty()) {
+            throw new ValidationException(errors.toString());
+        }
 
         if(developer == null || validateDeveloperOfGame(existingGame, developer)) {
             throw new UnauthorisedDeveloperException("Developer not authorised to update this game");
