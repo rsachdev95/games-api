@@ -87,7 +87,7 @@ public class GameController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
 
-        if (games == null) {
+        if (games.getTotalResults() < 1) {
             LOG.error("No games found");
             return ResponseEntity.notFound().build();
         }

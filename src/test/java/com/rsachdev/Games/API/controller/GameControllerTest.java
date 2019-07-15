@@ -1,5 +1,6 @@
 package com.rsachdev.Games.API.controller;
 
+import com.mongodb.DuplicateKeyException;
 import com.rsachdev.Games.API.exception.ResourceNotFoundException;
 import com.rsachdev.Games.API.exception.ServiceException;
 import com.rsachdev.Games.API.exception.UnauthorisedDeveloperException;
@@ -19,7 +20,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.validation.Validator;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
@@ -38,8 +38,6 @@ public class GameControllerTest {
     private static final String TITLE = "title";
     private static final String REQUEST_URI = "/games";
     private static final URI LOCATION_HEADER = URI.create(REQUEST_URI + "/" + ID);
-
-    private Validator validator;
 
     @Mock
     private GameService gameService;
@@ -99,7 +97,9 @@ public class GameControllerTest {
     @Test
     @DisplayName("Tests unsuccessful retrieval of all games - not found")
     void listAllGamesUnsuccessfulNotFound() throws ServiceException {
-        when(gameService.listAllGames()).thenReturn(null);
+        Games games = createGames();
+        games.setTotalResults(0);
+        when(gameService.listAllGames()).thenReturn(games);
 
         ResponseEntity response = gameController.listAll();
         assertNotNull(response);
@@ -172,6 +172,19 @@ public class GameControllerTest {
         ResponseEntity response = gameController.create(game, request);
         assertNotNull(response);
         assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
+    }
+
+    @Test
+    @DisplayName("Test unsuccessful create of game - DuplicateKeyException")
+    void createGameUnsuccessfulDuplicateKeyException() throws UnauthorisedDeveloperException, ServiceException, ValidationException {
+        Game game = createGame();
+
+        when(request.getHeader(DEVELOPER)).thenReturn(DEVELOPER);
+        when(gameService.createGame(game, DEVELOPER)).thenThrow(DuplicateKeyException.class);
+
+        ResponseEntity response = gameController.create(game, request);
+        assertNotNull(response);
+        assertEquals(HttpStatus.CONFLICT, response.getStatusCode());
     }
 
     @Test

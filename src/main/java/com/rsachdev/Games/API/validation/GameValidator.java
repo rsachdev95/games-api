@@ -11,11 +11,11 @@ public class GameValidator {
     public List<String> validateNotNullOrEmpty(Game game) {
         List<String> errors = new ArrayList<>();
 
-        if(game.getTitle().trim().isEmpty() || game.getTitle() == null) {
+        if(game.getTitle() == null || game.getTitle().trim().isEmpty()) {
             errors.add("Game must have a title");
         }
 
-        if(game.getDeveloper().trim().isEmpty() || game.getDeveloper() == null) {
+        if(game.getDeveloper() == null || game.getDeveloper().trim().isEmpty()) {
             errors.add("Game must have a developer");
         }
 
