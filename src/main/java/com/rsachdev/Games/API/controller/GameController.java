@@ -2,7 +2,6 @@ package com.rsachdev.Games.API.controller;
 
 import com.mongodb.DuplicateKeyException;
 import com.rsachdev.Games.API.GamesApiApplication;
-import com.rsachdev.Games.API.exception.DataException;
 import com.rsachdev.Games.API.exception.ResourceNotFoundException;
 import com.rsachdev.Games.API.exception.ServiceException;
 import com.rsachdev.Games.API.exception.UnauthorisedDeveloperException;
@@ -14,6 +13,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
@@ -63,9 +63,6 @@ public class GameController {
         } catch (UnauthorisedDeveloperException ude) {
             LOG.error("Developer not authorised to create " + game.getTitle(), ude);
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        } catch (DataException de) {
-            LOG.error("Developer, " + developer + ", trying to create the game is not the same as the developer listed on the game, " + game.getDeveloper(), de);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
 
         String locationString = request.getRequestURI() + "/" + createdGame.getId();
