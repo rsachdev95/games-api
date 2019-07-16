@@ -20,6 +20,9 @@ public class AmazonS3Service {
     private static final String FILE = "developers.json";
 
     @Autowired
+    private ObjectMapper mapper;
+
+    @Autowired
     private AmazonS3 amazonS3Client;
 
     private List<Developer> authorisedDevelopers;
@@ -52,7 +55,6 @@ public class AmazonS3Service {
     }
 
     private List<Developer> unmarshallJson(S3ObjectInputStream objectStream) throws IOException {
-        ObjectMapper mapper = new ObjectMapper();
         Developers developers;
 
         try {
