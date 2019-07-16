@@ -22,6 +22,7 @@ import org.springframework.http.ResponseEntity;
 import javax.servlet.http.HttpServletRequest;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -37,6 +38,8 @@ public class GameControllerTest {
     private static final String DEVELOPER = "developer";
     private static final String TITLE = "title";
     private static final String REQUEST_URI = "/games";
+    private static final String START_INDEX = "0";
+    private static final String ITEMS_PER_PAGE = "10";
     private static final URI LOCATION_HEADER = URI.create(REQUEST_URI + "/" + ID);
 
     @Mock
@@ -86,9 +89,9 @@ public class GameControllerTest {
     @DisplayName("Tests successful retrieval of all games")
     void listAllGamesSuccessful() throws ServiceException {
         Games games = createGames();
-        when(gameService.listAllGames()).thenReturn(games);
+        when(gameService.listAllGames(START_INDEX, ITEMS_PER_PAGE)).thenReturn(games);
 
-        ResponseEntity response = gameController.listAll();
+        ResponseEntity response = gameController.listAll(START_INDEX, ITEMS_PER_PAGE);
         assertNotNull(response);
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertEquals(games, response.getBody());
@@ -99,23 +102,34 @@ public class GameControllerTest {
     void listAllGamesUnsuccessfulNotFound() throws ServiceException {
         Games games = createGames();
         games.setTotalResults(0);
-        when(gameService.listAllGames()).thenReturn(games);
+        when(gameService.listAllGames(START_INDEX, ITEMS_PER_PAGE)).thenReturn(games);
 
-        ResponseEntity response = gameController.listAll();
+        ResponseEntity response = gameController.listAll(START_INDEX, ITEMS_PER_PAGE);
         assertNotNull(response);
         assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
-        assertNull(response.getBody());
     }
+
+    @Test
+    @DisplayName("Tests unsuccessful retrieval of all games - not found - empty list")
+    void listAllGamesUnsuccessfulNotFoundEmptyList() throws ServiceException {
+        Games games = createGames();
+        games.setItems(Collections.emptyList());
+        when(gameService.listAllGames(START_INDEX, ITEMS_PER_PAGE)).thenReturn(games);
+
+        ResponseEntity response = gameController.listAll(START_INDEX, ITEMS_PER_PAGE);
+        assertNotNull(response);
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+    }
+
 
     @Test
     @DisplayName("Test unsuccessful retrieval of all games - ServiceException")
     void listAllGamesUnsuccessfulDataException() throws ServiceException {
-        when(gameService.listAllGames()).thenThrow(ServiceException.class);
+        when(gameService.listAllGames(START_INDEX, ITEMS_PER_PAGE)).thenThrow(ServiceException.class);
 
-        ResponseEntity response = gameController.listAll();
+        ResponseEntity response = gameController.listAll(START_INDEX, ITEMS_PER_PAGE);
         assertNotNull(response);
         assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
-        assertNull(response.getBody());
     }
 
     @Test
@@ -307,8 +321,8 @@ public class GameControllerTest {
     private Games createGames() {
         Games games = new Games();
         List<Game> gamesList = new ArrayList<>();
-        games.setItemsPerPage(2L);
-        games.setStartIndex(1L);
+        games.setItemsPerPage(Long.parseLong(ITEMS_PER_PAGE));
+        games.setStartIndex(Long.parseLong(START_INDEX));
         games.setTotalResults(3L);
         games.setItems(gamesList);
         gamesList.add(createGame());

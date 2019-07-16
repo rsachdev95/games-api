@@ -74,16 +74,16 @@ public class GameService {
         return createdGame;
     }
 
-    public Games listAllGames() throws ServiceException {
+    public Games listAllGames(String startIndex, String itemsPerPage) throws ServiceException {
         Games games = new Games();
 
-        Pageable pageable = PageRequest.of(0, 5);
+        Pageable pageable = PageRequest.of(Integer.parseInt(startIndex), Integer.parseInt(itemsPerPage));
 
         try {
             Page<Game> gamePage = gameRepository.findAll(pageable);
             games.setItems(gamePage.getContent());
             games.setItemsPerPage(gamePage.getSize());
-            games.setStartIndex(gamePage.getPageable().getOffset());
+            games.setStartIndex(gamePage.getPageable().getPageNumber());
             games.setTotalResults(gamePage.getTotalElements());
 
         } catch (MongoException me) {

@@ -76,18 +76,19 @@ public class GameController {
     }
 
     @GetMapping
-    public ResponseEntity listAll() {
+    public ResponseEntity listAll(@RequestParam(required=false, value="start-index", defaultValue="0") String startIndex,
+                                  @RequestParam(required=false, value="items-per-page", defaultValue="10") String itemsPerPage) {
         Games games;
 
         try {
             LOG.info("Retrieving all games");
-            games = gameService.listAllGames();
+            games = gameService.listAllGames(startIndex, itemsPerPage);
         } catch (ServiceException de) {
             LOG.error("Error when retrieving all games", de);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
 
-        if (games.getTotalResults() < 1) {
+        if (games.getTotalResults() < 1 || games.getItems().size() < 1) {
             LOG.error("No games found");
             return ResponseEntity.notFound().build();
         }

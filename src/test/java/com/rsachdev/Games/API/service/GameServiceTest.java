@@ -41,6 +41,8 @@ public class GameServiceTest {
     private static final String DEVELOPER_NAME = "developer";
     private static final Developer DEVELOPER = new Developer();
     private static final String TITLE = "title";
+    private static final String START_INDEX = "0";
+    private static final String ITEMS_PER_PAGE = "5";
     private List<Developer> authorisedDevelopers = new ArrayList<>();
 
     @Mock
@@ -259,7 +261,7 @@ public class GameServiceTest {
         when(gamePage.getPageable()).thenReturn(pageable);
         when(gamePage.getSize()).thenReturn(5);
 
-        Games serviceResult = gameService.listAllGames();
+        Games serviceResult = gameService.listAllGames(START_INDEX, ITEMS_PER_PAGE);
         assertNotNull(games);
         assertEquals(games.getItemsPerPage(), serviceResult.getItemsPerPage());
         assertEquals(games.getStartIndex(), serviceResult.getStartIndex());
@@ -275,7 +277,7 @@ public class GameServiceTest {
 
         when(gameRepository.findAll(pageable)).thenThrow(MongoException.class);
 
-        assertThrows(ServiceException.class, () -> gameService.listAllGames());
+        assertThrows(ServiceException.class, () -> gameService.listAllGames(START_INDEX, ITEMS_PER_PAGE));
     }
 
     @Test
@@ -348,8 +350,8 @@ public class GameServiceTest {
     private Games createGames() {
         Games games = new Games();
         List<Game> gamesList = new ArrayList<>();
-        games.setItemsPerPage(5L);
-        games.setStartIndex(0L);
+        games.setItemsPerPage(Long.parseLong(ITEMS_PER_PAGE));
+        games.setStartIndex(Long.parseLong(START_INDEX));
         games.setTotalResults(1L);
         games.setItems(gamesList);
         gamesList.add(createGame());
