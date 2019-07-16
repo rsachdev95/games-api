@@ -14,7 +14,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
@@ -25,6 +24,7 @@ import java.net.URI;
 @RequestMapping("/games")
 public class GameController {
     private static final Logger LOG = LoggerFactory.getLogger(GamesApiApplication.APPLICATION_NAMESPACE);
+    private static final String DEVELOPER_HEADER = "developer";
 
     @Autowired
     private GameService gameService;
@@ -50,7 +50,7 @@ public class GameController {
     @PostMapping
     public ResponseEntity create(@Valid @RequestBody Game game, HttpServletRequest request) {
         Game createdGame;
-        String developer = request.getHeader("developer");
+        String developer = request.getHeader(DEVELOPER_HEADER);
 
         try {
             LOG.info("Creating game: " + game.getTitle());
@@ -62,9 +62,10 @@ public class GameController {
             LOG.error("Id already exists - try creating " + game.getTitle() + " again", dke);
             return ResponseEntity.status(HttpStatus.CONFLICT).build();
         } catch (UnauthorisedDeveloperException ude) {
-            LOG.error("Developer not authorised to create " + game.getTitle(), ude);
+            LOG.error("Developer " + developer + " not authorised to create " + game.getTitle(), ude);
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         } catch (ValidationException ve) {
+            LOG.error(ve.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ve.getMessage());
         }
 
@@ -93,42 +94,54 @@ public class GameController {
             return ResponseEntity.notFound().build();
         }
 
+        LOG.info("Successfully retrieved list of all games");
         return ResponseEntity.ok(games);
     }
 
     @PutMapping("/{gameId}")
     public ResponseEntity update(@Valid @RequestBody Game game, @PathVariable String gameId, HttpServletRequest request) {
-        String developer = request.getHeader("developer");
+        String developer = request.getHeader(DEVELOPER_HEADER);
 
         try {
+            LOG.info("Updating game with id: " + gameId);
             gameService.updateGame(game, gameId, developer);
         } catch (UnauthorisedDeveloperException e) {
+            LOG.error("Developer " + developer + " not authorised to update game with id: " + gameId)
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         } catch (ServiceException e) {
+            LOG.error("Error updating game with id: " + gameId);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         } catch (ResourceNotFoundException rnfe) {
+            LOG.error("Could not update. Game with id: " + gameId + " not found");
             return ResponseEntity.notFound().build();
         } catch (ValidationException ve) {
+            LOG.error(ve.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ve.getMessage());
         }
 
+        LOG.info("Successfully updated game with id: " + gameId);
         return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/{gameId}")
     public ResponseEntity delete(@PathVariable String gameId, HttpServletRequest request) {
-        String developer = request.getHeader("developer");
+        String developer = request.getHeader(DEVELOPER_HEADER);
 
         try {
+            LOG.info("Deleting game with id: " + gameId);
             gameService.deleteGame(gameId, developer);
         } catch (ResourceNotFoundException e) {
+            LOG.error("Could not delete. Game with id: " + " not found");
             return ResponseEntity.notFound().build();
         } catch (ServiceException e) {
+            LOG.error("Error deleting game with id: " + gameId);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         } catch (UnauthorisedDeveloperException e) {
+            LOG.error("Developer " + developer + " not authorised to delete game with id: " + gameId);
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
+        LOG.info("Successfully deleted game with id: " + gameId);
         return ResponseEntity.noContent().build();
     }
 
