@@ -106,7 +106,7 @@ public class GameController {
             LOG.info("Updating game with id: " + gameId);
             gameService.updateGame(game, gameId, developer);
         } catch (UnauthorisedDeveloperException e) {
-            LOG.error("Developer " + developer + " not authorised to update game with id: " + gameId)
+            LOG.error("Developer " + developer + " not authorised to update game with id: " + gameId);
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         } catch (ServiceException e) {
             LOG.error("Error updating game with id: " + gameId);
